@@ -1,5 +1,7 @@
 package com.example.SpringsecurityJWT.config;
 
+import com.example.SpringsecurityJWT.model.Role;
+import com.example.SpringsecurityJWT.service.UserService;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import jakarta.servlet.FilterChain;
@@ -16,17 +18,21 @@ import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
-import java.util.List;
+import java.util.*;
+import java.util.stream.Collectors;
 
 
 @Component
 @RequiredArgsConstructor
 @Slf4j
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
+//    private final UserService userService;
+
     @Value("${jwt_secret}")
     private String jwtSecret;
 
@@ -70,9 +76,15 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     private UserDetails extractUserDetailsFromToken(String token) {
         Claims claims = Jwts.parser().setSigningKey(jwtSecret).build().parseClaimsJws(token).getBody();
         String username = claims.getSubject();
-        String role = (String) claims.get("role");
-        GrantedAuthority authority = new SimpleGrantedAuthority(role);
-        return new User(username, "", List.of(authority));
+
+        List<String> roles =  claims.get("role", List.class);
+        GrantedAuthority authoritie = new SimpleGrantedAuthority(roles.get(0));
+        List<GrantedAuthority> authorities = new ArrayList<>();
+        authorities.add(authoritie);
+
+        /*UserDetails userDetails = userService.findByUsername(username)
+                .orElseThrow(() -> new UsernameNotFoundException("Not found"));*/
+        return new User(username, "", authorities);
     }
 }
 

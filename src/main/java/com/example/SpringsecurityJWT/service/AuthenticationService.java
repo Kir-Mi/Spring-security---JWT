@@ -29,14 +29,12 @@ public class AuthenticationService {
     }
 
     public AuthenticationResponseDto signIn(SignInRequest request) {
-        authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(
-                request.getUsername(),
-                request.getPassword()
-        ));
+
 
         UserDetails user = userService.loadUserByUsername(request.getUsername());
 
         String  jwt = jwtUtil.generateToken(user);
+        authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(user, jwt, user.getAuthorities()));
         return new AuthenticationResponseDto(jwt);
     }
 }
