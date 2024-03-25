@@ -6,7 +6,6 @@ import com.example.SpringsecurityJWT.model.User;
 import com.example.SpringsecurityJWT.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
@@ -14,7 +13,7 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
-import java.util.Collections;
+import java.util.List;
 import java.util.Optional;
 
 @RequiredArgsConstructor
@@ -45,7 +44,7 @@ public class UserService implements UserDetailsService {
         user.setUsername(signUpRequest.getUsername());
         user.setEmail(signUpRequest.getEmail());
         user.setPassword(passwordEncoder.encode(signUpRequest.getPassword()));
-        user.setRole(Role.USER);
+        user.setRoles(List.of(Role.ROLE_USER));
         log.info("User saved");
         return userRepository.save(user);
     }
@@ -53,8 +52,8 @@ public class UserService implements UserDetailsService {
     public void getAdminRole() {
         String username = SecurityContextHolder.getContext().getAuthentication().getName();
         User user = findByUsername(username).orElseThrow(() -> new UsernameNotFoundException("Not found"));
-        user.setRole(Role.ADMIN);
-        log.info("Now user is admin");
+        user.setRoles(List.of(Role.ROLE_ADMIN));
+        log.info(username + " is an admin now");
         userRepository.save(user);
     }
 }

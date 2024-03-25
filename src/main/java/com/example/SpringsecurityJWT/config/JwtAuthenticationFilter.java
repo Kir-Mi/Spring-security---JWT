@@ -1,7 +1,5 @@
 package com.example.SpringsecurityJWT.config;
 
-import com.example.SpringsecurityJWT.model.Role;
-import com.example.SpringsecurityJWT.service.UserService;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import jakarta.servlet.FilterChain;
@@ -13,17 +11,15 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
-import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
-import java.util.*;
+import java.util.List;
 import java.util.stream.Collectors;
 
 
@@ -31,7 +27,6 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 @Slf4j
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
-//    private final UserService userService;
 
     @Value("${jwt_secret}")
     private String jwtSecret;
@@ -68,7 +63,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private Authentication createAuthentication(String token) {
         UserDetails userDetails = extractUserDetailsFromToken(token);
-
+        log.info(userDetails.getUsername() + " is logged in");
         // Создание объекта Authentication
         return new UsernamePasswordAuthenticationToken(userDetails, token, userDetails.getAuthorities());
     }
@@ -77,14 +72,9 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         Claims claims = Jwts.parser().setSigningKey(jwtSecret).build().parseClaimsJws(token).getBody();
         String username = claims.getSubject();
 
-        List<String> roles =  claims.get("role", List.class);
-        GrantedAuthority authoritie = new SimpleGrantedAuthority(roles.get(0));
-        List<GrantedAuthority> authorities = new ArrayList<>();
-        authorities.add(authoritie);
+        List<String> roles =  claims.get("roles", List.class);
 
-        /*UserDetails userDetails = userService.findByUsername(username)
-                .orElseThrow(() -> new UsernameNotFoundException("Not found"));*/
-        return new User(username, "", authorities);
+        return new User(username, "", roles.stream().map(SimpleGrantedAuthority::new).collect(Collectors.toList()));
     }
 }
 
